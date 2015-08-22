@@ -1,4 +1,4 @@
-local _level = require('level')
+local _level = require('world')
 
 function love.conf(t)
 end

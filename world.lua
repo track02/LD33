@@ -1,6 +1,6 @@
-local level = {}
+local world = {}
 
-function level.new()
+function world.new()
 
 	local self = {}
 	local level_length =10000 
@@ -13,7 +13,8 @@ function level.new()
 	local player_curve_position = 0
 	local player_coords = {x = 0, y = 0}
 	local player_rotation = 0
-	
+	local buildingno = 15
+
 	for i = 1, control_points_no, 1 do
 
 		if(i == 1) then
@@ -29,12 +30,37 @@ function level.new()
 			table.insert(control_points, level_length)
 			table.insert(control_points, 500)
 		end
+
+	end
+	
+	bezier_curve = love.math.newBezierCurve(control_points)
+
+
+	local buildinginc = 1 / buildingno
+
+	for i = 1, buildingno, 1 do
 		
+		curve_point = math.random()	
+		x,y = bezier_curve:evaluate(curve_point)
+		nx,ny = bezier_curve:evaluate(curve_point + 0.0001)
+		dx = x - nx
+		dy = y - ny
+		
+		
+
+		building = {}
+		building.x = x
+		building.y = y
+		building.width = 75
+		building.height = 75
+		building.rotation = math.atan2(dy,dx)		
+
+		table.insert(buildings,building)
+
 
 
 	end
 
-	bezier_curve = love.math.newBezierCurve(control_points)
 
 	function self.draw()	
 		
@@ -44,6 +70,31 @@ function level.new()
 
 		love.graphics.print(player_rotation, x1, 50)
 
+
+		for i = 1, #buildings, 1 do
+			
+			--Store coordinate system	
+			love.graphics.push()
+	
+			--Rotate buildings along curve
+			love.graphics.translate(buildings[i].x, buildings[i].y)
+			love.graphics.rotate(buildings[i].rotation)
+			love.graphics.translate(-buildings[i].x, -buildings[i].y)
+
+			love.graphics.rectangle("fill",
+						buildings[i].x,
+						buildings[i].y,
+						buildings[i].width,
+						buildings[i].height)
+
+			--Restore original coordinate system
+			love.graphics.pop()
+
+		end
+
+
+		love.graphics.push()	
+
 		--Translate origin to player center
 		love.graphics.translate(x1, y1)
 		--Rotate to follow curve
@@ -51,13 +102,15 @@ function level.new()
 		--Translate back
 		love.graphics.translate(-x1, -y1)
 
-
 		love.graphics.rectangle(
 					"fill",
 					x1,
 					y1,
 					10,
 					10)		
+
+		love.graphics.pop()
+
 
 	end
 	
@@ -94,5 +147,5 @@ end
 
 
 
-return level
+return world 
 
