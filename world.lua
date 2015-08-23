@@ -1,19 +1,18 @@
+local _npcmanager = require('npcmanager')
+local _player = require('player')
 local world = {}
+
 
 function world.new()
 
 	local self = {}
 	local level_length =10000 
-
 	local buildings = {}
-	local path = {}
 	local bezier_curve
 	local control_points_no = 50 
 	local control_points  = {}
-	local player_curve_position = 0
-	local player_coords = {x = 0, y = 0}
-	local player_rotation = 0
 	local buildingno = 15
+		
 
 	for i = 1, control_points_no, 1 do
 
@@ -34,7 +33,8 @@ function world.new()
 	end
 	
 	bezier_curve = love.math.newBezierCurve(control_points)
-
+	local player = _player.new(bezier_curve) --World contains a player
+	local npcs = _npcmanager.new(bezier_curve)
 
 	local buildinginc = 1 / buildingno
 
@@ -64,12 +64,7 @@ function world.new()
 
 	function self.draw()	
 		
-		x1,y1 = bezier_curve:evaluate(player_curve_position)
-
 		love.graphics.line(bezier_curve:render())
-
-		love.graphics.print(player_rotation, x1, 50)
-
 
 		for i = 1, #buildings, 1 do
 			
@@ -92,54 +87,27 @@ function world.new()
 
 		end
 
+		player.draw()
 
-		love.graphics.push()	
-
-		--Translate origin to player center
-		love.graphics.translate(x1, y1)
-		--Rotate to follow curve
-		love.graphics.rotate(player_rotation)
-		--Translate back
-		love.graphics.translate(-x1, -y1)
-
-		love.graphics.rectangle(
-					"fill",
-					x1,
-					y1,
-					10,
-					10)		
-
-		love.graphics.pop()
-
+		npcs.drawNPCs()
 
 	end
+
+
+	function self.update(dt)
+		npcs.createNPCs()
+		npcs.updateNPCs(player.getCurvePosition())
+		player.update(dt)
+	end
+
 	
 	function self.movePlayer(t)
-
-		cx,cy = bezier_curve:evaluate(player_curve_position)
-
-		player_curve_position = player_curve_position + t
-
-		nx,ny = bezier_curve:evaluate(player_curve_position)
-
-		--Calculate rotation
-		-- atan(dy/dx) to find angle between two points
-		-- Better to use atan2(dy,dx), prevents 0 division + handles quadrants 
-
-		if(t >= 0) then --Points Left - Right
-			dy = (cy-ny)
-			dx = (cx-nx)
-		else		--Points Right - Left
-			dy = (ny-cy)
-			dx = (nx-cx)
-		end
-		player_rotation = math.atan2(dy,dx)
-		
-
-
+		player.move(t)
 	end	
 
-
+	function self.jumpPlayer()
+		player.jump()
+	end
 
 	return self
 end	
