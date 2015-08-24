@@ -9,7 +9,7 @@ function npcmanager.new(level)
 
 	--Manages complete set of NPCs
 	local npcs = {}
-	local npc_max = 1000 
+	local npc_max = 100
 	local deadnpc = false 
 	local toremove = {}
 	
@@ -22,16 +22,16 @@ function npcmanager.new(level)
 			
 			if(npc_type <= 0.5) then
 				--Create Civ
-				table.insert(npcs, _npc.new(0, level_curve, math.random()))
+				table.insert(npcs, _npc.new(1, level_curve, math.random()))
 			elseif(npc_type <= 0.8) then
 				--Create Warrior
-				table.insert(npcs, _npc.new(1, level_curve, math.random()))
+				table.insert(npcs, _npc.new(2, level_curve, math.random()))
 			elseif(npc_type <= 0.9) then
 				--Create Ranger
-				table.insert(npcs, _npc.new(2, level_curve, math.random()))
+				table.insert(npcs, _npc.new(3, level_curve, math.random()))
 			elseif(npc_type <= 1.0) then
 				--Create Mage
-				table.insert(npcs, _npc.new(3, level_curve, math.random()))
+				table.insert(npcs, _npc.new(4, level_curve, math.random()))
 			end
 		end
 
@@ -65,6 +65,8 @@ function npcmanager.new(level)
 
 	--Check if an NPC has been hit by player
 	function self.checkHits(attacks) 
+		
+		hits = 0
 
 		--Look at player attacks, see if any npc has been hit
 		for a = 1, #attacks, 1 do
@@ -83,17 +85,14 @@ function npcmanager.new(level)
 				and (npcPosition >= atk_start and npcPosition <= atk_end) 
 				or (npcPosition <= atk_start and npcPosition >= atk_end)) then
 					npcs[i].hit(attacks[a].dir)
+					hits = hits + 1	
 				end
-
-				--Determine if hit, react accordingly
-				--npcs[i].hitcheck(centerx, centery, radius)
-
 
 			end
 
 		end
 
-
+		return hits
 	end
 
 	--Check if NPC projectile has hit player

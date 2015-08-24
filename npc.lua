@@ -9,26 +9,47 @@ function npc.new(_npctype, level, curve_position)
 	local level_curve = level
 	local level_position = curve_position
 	local x,y = 0,0
+	local movetimer = 500
 	local movetime = 500
+
+	local animtimer = 5
+	local animtime = 0
+	local up = true
+
+	local movedir = 1
 	local flee_distance = 100
 	local charge_distance = 150	
 	local fire_distance = 400
 	local magic_distance = 250
 	local move_speed = 0.0001
-	local fly_speed = 0.05
+	local fly_speed = 0.1
 	local npctype = _npctype -- 0 Civ / 1 War / 2 Rng / 3 Clr (Try and move to inheritance structure if time allows!)
 	local projectiles = {}
 	local hit_player = false	
 	local playhx, playhy, playrad = 0,0,0
+	local projectile_timer_magic = 1000
+	local projectile_timer_ranger = 650	
+	local projectile_time = 0
+	local magsprite = love.graphics.newImage("mproj.png")
+	local rngsprite = love.graphics.newImage("rproj.png")
+
+	local sprites = {love.graphics.newImage("civ.png"), love.graphics.newImage("war.png"), love.graphics.newImage("rng.png"), love.graphics.newImage("mag.png"), love.graphics.newImage("fly.png")}
 
 	function self.move(increment)	
 
 		level_position = level_position + increment
 		
-		if(level_position > 1) then
+
+		if(level_position > 1 ) then
 			level_position = 1
+			if(npctype ~= 5) then
+				movedir = movedir * -1
+			end
 		elseif(level_position < 0) then
 			level_position = 0
+			if(npctype ~= t) then
+				movedir = movedir * -1
+			end
 		end
 
 		new_x, new_y = level_curve:evaluate(level_position)
@@ -41,6 +62,23 @@ function npc.new(_npctype, level, curve_position)
 			dy = (new_y - y)
 		end
 
+
+		if(up) then
+			animtime = animtime + 1
+		else 
+			animtime = animtime - 1
+		end
+
+	
+		if(animtime >= animtimer) then
+			up = false
+			animtime = animtimer
+		elseif(animtime <= 0) then
+			up = true
+			animtime = 0
+		end
+				
+
 		rotation = math.atan2(dy,dx)
 		x = new_x
 		y = new_y
@@ -50,68 +88,51 @@ function npc.new(_npctype, level, curve_position)
 
 	function self.draw()
 	
-		if(self.isDead()) then
-			love.graphics.print("Dead", 500,300)
-		end
-
-		if(npctype == 1) then
-			love.graphics.setColor(255,0,0)
-			love.graphics.print("WARRIOR", 400,300)
-		end
-		
-		if(npctype == 2) then
-			love.graphics.setColor(0,255,0)
-			love.graphics.print("RANGER", 400,400)
-			if(#projectiles ~= 0) then
-				projx, projy = projectiles[1].curve:evaluate(projectiles[1].position)
-				love.graphics.circle("fill", projx, projy, 3, 10)
-			end
-			
-			love.graphics.circle("line", playhx, playhy, playrad, 10)
-			
-		end
-
-
 		if(npctype == 3) then
-			love.graphics.setColor(0,0,255)
-			love.graphics.print("WIZARD", 400,300)
 			if(#projectiles ~= 0) then
 				projx, projy = projectiles[1].curve:evaluate(projectiles[1].position)
-				love.graphics.circle("fill", projx, projy, 3, 10)
+				love.graphics.draw(rngsprite, projx, projy)
+			end
+		end
+
+
+		if(npctype == 4) then
+			if(#projectiles ~= 0) then
+				projx, projy = projectiles[1].curve:evaluate(projectiles[1].position)
+				love.graphics.draw(magsprite, projx, projy)
 			end		
 
 		end
 
+		love.graphics.translate(0, -animtime)
 
+		if(not self.isDead()) then
+			love.graphics.draw(sprites[npctype], x, y, rotation)
+		end
 
-
-		love.graphics.push()
-
-		love.graphics.translate(x,y)
-		love.graphics.rotate(rotation)
-		love.graphics.translate(-x,-y)
-
-		love.graphics.rectangle(
-					"fill",
-					x,
-					y,
-					width,
-					height)
-
-		love.graphics.pop()
-		
+		love.graphics.translate(0, animtime)
 		love.graphics.setColor(255,255,255)
 
 	end
 	
 	--Random Movement
 	local function randomMovement()
+		
+		movetime = movetime + 1
+		self.move(movedir * move_speed)
 
-		if(math.random() > 0.85) then
-			self.move(move_speed)
-		else
-			self.move(-move_speed)
+		
+		if(movetime >= movetimer) then
+
+			if(math.random() > 0.5) then
+				movedir = 1
+			else
+				movedir = -1
+			end
+
+			movetime = 0
 		end
+
 	end
 
 	
@@ -163,6 +184,8 @@ function npc.new(_npctype, level, curve_position)
 	end	
 	
 	local function rangerAttack(px, py, cx, cy)
+		
+		projectile_time = projectile_time + 1
 	
 		--Determine distance from NPC
 		dx = math.abs(px - x)
@@ -177,13 +200,14 @@ function npc.new(_npctype, level, curve_position)
 			else
 				self.move(-move_speed)
 			end
-		elseif(distance > flee_distance and distance <= fire_distance and #projectiles < 1) then
+		elseif(distance > flee_distance and distance <= fire_distance and #projectiles < 1 and projectile_time >= projectile_timer_ranger) then
 			--Create a new projectile if isn't present
 			projectile = {}
 			projectile.curve = love.math.newBezierCurve(x,y,dx/2,y - 50, cx,cy)
 			projectile.position = level_position
 			projectile.travel_speed = 0.005
 			table.insert(projectiles,projectile)
+			projectile_time = 0
 		else
 			randomMovement()
 		end
@@ -193,7 +217,10 @@ function npc.new(_npctype, level, curve_position)
 
 
 	local function mageAttack(px, py, cx, cy)
-			
+
+		projectile_time = projectile_time + 1
+
+
 		--Determine distance from NPC
 		dx = math.abs(px - x)
 		dy = math.abs(py - y)
@@ -207,13 +234,14 @@ function npc.new(_npctype, level, curve_position)
 			else
 				self.move(-move_speed)
 			end
-		elseif(distance > flee_distance and distance <= magic_distance and #projectiles < 1) then
+		elseif(distance > flee_distance and distance <= magic_distance and #projectiles < 1 and projectile_time >= projectile_timer_magic) then
 			--Create a new projectile if isn't present
 			projectile = {}
 			projectile.curve = love.math.newBezierCurve(x,y,cx,cy)
 			projectile.position = level_position
 			projectile.travel_speed = 0.004
 			table.insert(projectiles,projectile)
+			projectile_time = 0
 		else
 			randomMovement()
 		end
@@ -223,13 +251,13 @@ function npc.new(_npctype, level, curve_position)
 
 	function self.update(px, py, cx, cy) 
 
-		if(npctype == 0) then
+		if(npctype == 1) then
 			civilianFlee(px,py)
-		elseif(npctype == 1) then
-			warriorAttack(px,py)
 		elseif(npctype == 2) then
-			rangerAttack(px, py, cx, cy)
+			warriorAttack(px,py)
 		elseif(npctype == 3) then
+			rangerAttack(px, py, cx, cy)
+		elseif(npctype == 4) then
 			mageAttack(px, py, cx, cy)
 		elseif(npctype == 5) then
 			self.move(fly_speed)
@@ -271,6 +299,7 @@ function npc.new(_npctype, level, curve_position)
 		--Generate random curve, flying off level
 		level_curve = love.math.newBezierCurve(x,y, x,  y, x + (attack_dir *math.random(10,20)), y - 15)
 		level_position = 0
+		movedir = 1
 	end
 		
 	function self.projectileHitCheck(plx,ply,radius)

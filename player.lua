@@ -5,9 +5,9 @@ function player.new(level)
 
 	local self = {}
 	local rotation = 0
-	local width = 10
-	local height = 10
-	local radius = 5
+	local width = 50 
+	local height = 50
+	local radius = 12 
 	local level_curve = level
 	local level_curve_original = level
 	local level_position = 0
@@ -15,11 +15,16 @@ function player.new(level)
 	local cx,cy = 0,0
 	local move_dir = 1
 	local move_speed = 0.0075
+
+	local sprite_timer = 25
+	local sprite_time = 0
+	local sprite_index = 0		
 	
-	local attack_distance = 0.005
+	local attack_distance = 0.025
 	local attack_multiplier = 1
-	local attack_travel_speed = 0.001
-	
+	local attack_travel_speed = 0.01
+
+	local health = 3
 
 	local display_arc = false
 	local jump_arc = level
@@ -31,13 +36,18 @@ function player.new(level)
 	local jump_dir = 0
 	local jump_cancel = false
 	local jump_attacks = 0	
+	local psprite = love.graphics.newImage("pproj.png")
 
+	local player_sprite = love.graphics.newImage("player.png")
+	local player_walk_sprites = {love.graphics.newImage("player_walk1.png"), player_sprite, love.graphics.newImage("player_walk2.png")}
+			
 	--Attacks travel along the level, from player level_position to an end point
 	local attacks = {}
 
 	function self.move(direction)
 		if(not jumping and not display_arc) then
 			move_dir = direction
+			sprite_time = sprite_timer
 		end
 
 		if(jumping) then
@@ -58,8 +68,9 @@ function player.new(level)
 
 		if(not jumping and not jump_cancel ) then	
 			display_arc = true
-							
-			--move jump landing zone while key is held down	
+		
+			cx,cy = self.getCenter()
+	
 			jump_end = jump_end + (jump_arcspeed * move_dir)
 		
 			if(jump_end > 1) then
@@ -72,11 +83,11 @@ function player.new(level)
 			dx,dy = endx, endy		
 
 			if(x < endx) then
-				dx = (x - endx)
-				dy = (y - endy)
+				dx = (cx - endx)
+				dy = (cy - endy)
 			else
-				dx = (endx - x)
-				dy = (endy - y)
+				dx = (endx - cx)
+				dy = (endy - cy)
 			end
 		
 			jump_arc = love.math.newBezierCurve(x,y, endx,endy -100,  endx, endy)	
@@ -270,6 +281,26 @@ function player.new(level)
 		end
 
 
+		--Determine sprite to use
+		if(move_dir == 0) then
+			sprite_index = 2	
+		else
+			sprite_time = sprite_time + 1
+			
+			if(sprite_time >= sprite_timer) then
+			
+				if(sprite_index == #player_walk_sprites) then
+					sprite_index = 1
+				else
+					sprite_index = sprite_index + 1
+				end	
+				sprite_time = 0
+			end
+
+
+		end
+
+
 	end
 
 	
@@ -279,16 +310,7 @@ function player.new(level)
 
 		love.graphics.push()
 
-		love.graphics.translate(x, y)
-		love.graphics.rotate(rotation)
-		love.graphics.translate(-x, -y)
-		
-		love.graphics.rectangle(
-					"fill",
-					x,
-					y,
-					width,
-					height)
+		love.graphics.draw(player_walk_sprites[sprite_index], x,y, rotation)		
 		
 		love.graphics.setColor(204,0,204)
 		love.graphics.circle("fill", (x+width/2),(y+height/2),3,10)
@@ -296,27 +318,15 @@ function player.new(level)
 			
 		love.graphics.pop()
 		
-		love.graphics.print("Y Position: " .. y, x, 100)
-		love.graphics.print("WINDOW POSITION: " .. (x % 800), x, 120)
-		love.graphics.print("X Position: " .. x, x, 110)
-		love.graphics.print("ATTACK NO: " .. #attacks, x,150)
-		love.graphics.print("JUMP NO: " .. jump_attacks, x, 200)
-		love.graphics.print("JUMP END: " .. jump_end, x, 175)
-		love.graphics.print("MOVE DIR: ".. move_dir ,x, 190)
---		love.graphics.circle("line", (x-width/2), (y-height/2), radius, 10)
-		love.graphics.setColor(204,0,204)
-
 		--Draw attacks
 		for i=1, #attacks, 1 do
 			atk_x, atk_y = level:evaluate(attacks[i].position)
-			love.graphics.print("Current Position: " .. attacks[i].position .. "End Position: " .. attacks[i].end_position, x, 175)
-			love.graphics.circle("fill", atk_x, atk_y, 5, 5)
+			love.graphics.draw(psprite,atk_x, atk_y - 5)
 		end
 
 		love.graphics.setColor(255,255,255)
 
 		if(display_arc) then
-			love.graphics.print("PLOTTING JUMP", x, 160)
 			love.graphics.line(jump_arc:render())
 		end
 
@@ -343,8 +353,16 @@ function player.new(level)
 	function self.getRadius()
 		return radius
 	end
+	
+	function self.decreaseHealth(val)
+		health = health - val
+	end
 
-	self.move(0)
+	function self.getHealth()
+		return health
+	end
+
+	self.move(1)
 	return self
 
 end
