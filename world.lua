@@ -6,10 +6,10 @@ local world = {}
 function world.new()
 
 	local self = {}
-	local level_length =10000 
+	local level_length = 8000
 	local buildings = {}
 	local bezier_curve
-	local control_points_no = 15 
+	local control_points_no = 50 
 	local control_points  = {}
 	local buildingno = 15
 		
@@ -74,14 +74,12 @@ function world.new()
 		
 		love.graphics.line(bezier_curve:render())
 
-		love.graphics.setColor(0,0,125)
+		love.graphics.setColor(178,209,209)
 		love.graphics.polygon("fill", above_polyverts)
-		love.graphics.setColor(255,255,255)
-
-
-		love.graphics.setColor(0,125,0)
+		love.graphics.setColor(153, 255, 153)
 		love.graphics.polygon("fill", below_polyverts)
 		love.graphics.setColor(255,255,255)
+
 
 		for i = 1, #buildings, 1 do
 			
@@ -141,6 +139,10 @@ function world.new()
 		player.showJump()
 	end
 
+
+	function self.getPlayerPosition()
+		return player.getCenter()
+	end
 
 	return self
 end	

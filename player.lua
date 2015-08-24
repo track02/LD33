@@ -27,9 +27,10 @@ function player.new(level)
 	local jump_arcspeed = 0.00333
 	local jump_speed = 0.75
 	local jumping = false
-	local landed = false
+	local landed = true
 	local jump_dir = 0
-	local jump_cancel = false	
+	local jump_cancel = false
+	local jump_attacks = 0	
 
 	--Attacks travel along the level, from player level_position to an end point
 	local attacks = {}
@@ -55,7 +56,7 @@ function player.new(level)
 	function self.showJump()
 	
 
-		if(not jumping and not jump_cancel) then	
+		if(not jumping and not jump_cancel ) then	
 			display_arc = true
 							
 			--move jump landing zone while key is held down	
@@ -84,7 +85,7 @@ function player.new(level)
 
 	function self.jump()
 
-		if(not jumping and not jump_cancel) then
+		if(not jumping and not jump_cancel and jump_attacks == 0) then
 	
 			display_arc = false
 			jumping = true				
@@ -129,6 +130,8 @@ function player.new(level)
 			attack.end_position = 1
 		end
 
+		attack.jump = 0
+
 		table.insert(attacks, attack)		
 
 	end
@@ -161,8 +164,11 @@ function player.new(level)
 			attack_R.end_position = 1
 		end
 
+		attack_L.jump, attack_R.jump = 1,1
+
 		table.insert(attacks,attack_L)
-		table.insert(attacks,attack_R)	
+		table.insert(attacks,attack_R)
+		jump_attacks = 2 	
 
 
 
@@ -180,6 +186,7 @@ function player.new(level)
 			
 	
 			if((attacks[i].position >= attacks[i].end_position and attacks[i].dir== 1) or (attacks[i].position <= attacks[i].end_position and attacks[i].dir == -1)) then
+				jump_attacks = jump_attacks - attacks[i].jump
 
 				table.insert(toremove, i)
 			end
@@ -190,6 +197,9 @@ function player.new(level)
 			table.remove(attacks, i)
 		end
 
+		if(jump_attacks < 0) then
+			jump_attacks = 0
+		end		
 
 	end
 
@@ -206,8 +216,7 @@ function player.new(level)
 			if(level_position >= 1) then
 				level_position = jump_end
 				level_curve = level_curve_original
-				jumping = false
-				landed = true
+				landed = false
 			end
 
 		elseif(not jumping) then
@@ -248,15 +257,19 @@ function player.new(level)
 		self.attack_update()
 
 
+		if(not landed) then
+			move_dir = jump_dir --Reset move_dir on landing
+			landed = true
+			jumping = false
+			self.jump_attacks()
+			level_position = level_position + (dt * move_speed * move_dir)  
+		end
+
 		if(not jumping and not display_arc) then
 			jump_end = level_position + (move_speed * move_dir)
 		end
 
-		if(landed) then
-			move_dir = jump_dir --Reset move_dir on landing
-			landed = false
-			self.jump_attacks()
-		end
+
 	end
 
 	
@@ -284,8 +297,10 @@ function player.new(level)
 		love.graphics.pop()
 		
 		love.graphics.print("Y Position: " .. y, x, 100)
+		love.graphics.print("WINDOW POSITION: " .. (x % 800), x, 120)
 		love.graphics.print("X Position: " .. x, x, 110)
 		love.graphics.print("ATTACK NO: " .. #attacks, x,150)
+		love.graphics.print("JUMP NO: " .. jump_attacks, x, 200)
 		love.graphics.print("JUMP END: " .. jump_end, x, 175)
 		love.graphics.print("MOVE DIR: ".. move_dir ,x, 190)
 --		love.graphics.circle("line", (x-width/2), (y-height/2), radius, 10)

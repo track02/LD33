@@ -14,19 +14,29 @@ function love.load()
 end
 
 function love.update(dt)
+	
+	opx, opy = world.getPlayerPosition()
+
 	world.update(dt)
+
+	px,py = world.getPlayerPosition()
+
+	--Translate world as player moves along
+	dx = px - opx
+
+
+	if(px % 800 <= 400) then
+	--	translate_x = translate_x - dx	
+	end
 
 end
 
 function love.keypressed(key, isrepeat)
 
 	if love.keyboard.isDown("right") then
-		translate_x = translate_x - 10
 		world.movePlayer(1)
-	end
-
+	end	
 	if love.keyboard.isDown("left") then
-		translate_x = translate_x  + 10
 		world.movePlayer(-1)
 	end
 
@@ -58,6 +68,7 @@ end
 
 function love.draw()
 
+	px,py = world.getPlayerPosition()
 	love.graphics.translate(translate_x, translate_y)
 	world.draw()
 
