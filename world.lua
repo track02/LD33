@@ -9,7 +9,7 @@ function world.new()
 	local level_length =10000 
 	local buildings = {}
 	local bezier_curve
-	local control_points_no = 50 
+	local control_points_no = 15 
 	local control_points  = {}
 	local buildingno = 15
 		
@@ -22,7 +22,7 @@ function world.new()
 		end
 		
 			table.insert(control_points,i*200)
-			table.insert(control_points,math.random(0,800))
+			table.insert(control_points, math.random(400,500))
 
 
 		if (i == control_points_no)then
@@ -35,7 +35,6 @@ function world.new()
 	bezier_curve = love.math.newBezierCurve(control_points)
 	local player = _player.new(bezier_curve) --World contains a player
 	local npcs = _npcmanager.new(bezier_curve)
-
 	local buildinginc = 1 / buildingno
 
 	for i = 1, buildingno, 1 do
@@ -57,14 +56,32 @@ function world.new()
 
 		table.insert(buildings,building)
 
-
-
 	end
 
+	local below_polyverts = bezier_curve:render()
+	table.insert(below_polyverts, level_length)
+	table.insert(below_polyverts, 600)
+	table.insert(below_polyverts, 0)
+	table.insert(below_polyverts, 600)
+	
+	local above_polyverts = bezier_curve:render()
+	table.insert(above_polyverts, level_length)
+	table.insert(above_polyverts, 0)
+	table.insert(above_polyverts, 0)
+	table.insert(above_polyverts, 0)
 
 	function self.draw()	
 		
 		love.graphics.line(bezier_curve:render())
+
+		love.graphics.setColor(0,0,125)
+		love.graphics.polygon("fill", above_polyverts)
+		love.graphics.setColor(255,255,255)
+
+
+		love.graphics.setColor(0,125,0)
+		love.graphics.polygon("fill", below_polyverts)
+		love.graphics.setColor(255,255,255)
 
 		for i = 1, #buildings, 1 do
 			
@@ -91,7 +108,6 @@ function world.new()
 		end
 
 		player.draw()
-
 		npcs.drawNPCs()
 
 	end

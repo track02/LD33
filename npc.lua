@@ -15,7 +15,7 @@ function npc.new(_npctype, level, curve_position)
 	local fire_distance = 400
 	local magic_distance = 250
 	local move_speed = 0.0001
-	local fly_speed = 0.01
+	local fly_speed = 0.05
 	local npctype = _npctype -- 0 Civ / 1 War / 2 Rng / 3 Clr (Try and move to inheritance structure if time allows!)
 	local projectiles = {}
 	local hit_player = false	
@@ -50,8 +50,8 @@ function npc.new(_npctype, level, curve_position)
 
 	function self.draw()
 	
-		if(hit_player) then
-			love.graphics.print("HIT PLAYER!", 500,300)
+		if(self.isDead()) then
+			love.graphics.print("Dead", 500,300)
 		end
 
 		if(npctype == 1) then
@@ -251,7 +251,7 @@ function npc.new(_npctype, level, curve_position)
 		for i=1, #toremove, 1 do
 			table.remove(projectiles, i)
 		end
-
+		
 
 	end
 
@@ -264,12 +264,12 @@ function npc.new(_npctype, level, curve_position)
 		return npctype
 	end
 
-	function self.hit()
+	function self.hit(attack_dir)
 		--Change type, destroyed
 		npctype = 5
 		
 		--Generate random curve, flying off level
-		level_curve = love.math.newBezierCurve(x,y, x,  y, x+ math.random(50,100), y - 50)
+		level_curve = love.math.newBezierCurve(x,y, x,  y, x + (attack_dir *math.random(10,20)), y - 15)
 		level_position = 0
 	end
 		
@@ -307,6 +307,16 @@ function npc.new(_npctype, level, curve_position)
 
 		return hits
 
+	end
+
+	function self.isDead()
+
+		if(npctype == 5 and level_position >= 0.99) then
+			return true
+		else
+			return false
+		end
+		
 	end
 
 

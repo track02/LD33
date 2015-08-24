@@ -10,6 +10,8 @@ function npcmanager.new(level)
 	--Manages complete set of NPCs
 	local npcs = {}
 	local npc_max = 1000 
+	local deadnpc = false 
+	local toremove = {}
 	
 	function self.createNPCs()
 	
@@ -35,13 +37,29 @@ function npcmanager.new(level)
 
 	end
 
+
+
 	--Update NPCs based on player position
 	function self.updateNPCs(px ,py, cx, cy)
+
+		toremove = {}		
 
 		for i=1,#npcs,1 do
 			--Determine what to do, flee, attack, heal friends
 			npcs[i].update(px,py, cx, cy) 
+			
+			if(npcs[i].isDead()) then
+				table.insert(toremove, i)
+			end
+
 		end
+
+		for i=1,#toremove,1 do 
+			deadnpc = true
+			table.remove(npcs, toremove[i])
+		end
+	
+				
 	end
 
 
@@ -64,7 +82,7 @@ function npcmanager.new(level)
 				if(npctype ~= 5 
 				and (npcPosition >= atk_start and npcPosition <= atk_end) 
 				or (npcPosition <= atk_start and npcPosition >= atk_end)) then
-					npcs[i].hit()
+					npcs[i].hit(attacks[a].dir)
 				end
 
 				--Determine if hit, react accordingly
@@ -96,14 +114,20 @@ function npcmanager.new(level)
 
 	
 	function self.drawNPCs()
-		
+	
+		love.graphics.print("NPCS LEFT: " .. #npcs, 600,40)
+
+		if(deadnpc) then
+			love.graphics.print("NPC REMOVED!", 600, 50)
+		end	
+	
 		for i=1, #npcs, 1 do
 			npcs[i].draw()
 		end		
 
-
 	end	
 
+	
 
  return self
 
