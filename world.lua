@@ -96,7 +96,7 @@ function world.new()
 
 	function self.update(dt)
 		npcs.createNPCs()
-		npcs.updateNPCs(player.getCurvePosition())
+		npcs.updateNPCs(player.getPosition())
 		player.update(dt)
 		npcs.checkHits(player.getAttacks())
 	end
@@ -112,6 +112,10 @@ function world.new()
 	
 	function self.attackPlayer()
 		player.attack()
+	end
+
+	function self.plotJumpPlayer()
+		player.showJump()
 	end
 
 

@@ -36,11 +36,11 @@ function npcmanager.new(level)
 	end
 
 	--Update NPCs based on player position
-	function self.updateNPCs(player_curve_position)
+	function self.updateNPCs(px ,py)
 
 		for i=1,#npcs,1 do
 			--Determine what to do, flee, attack, heal friends
-			npcs[i].update(player_curve_position) 
+			npcs[i].update(px,py) 
 		end
 	end
 

@@ -31,7 +31,7 @@ function love.keypressed(key, isrepeat)
 	end
 
 	if love.keyboard.isDown("up") then
-		world.jumpPlayer()
+		world.plotJumpPlayer()
 	end
 
 
@@ -41,6 +41,14 @@ function love.keypressed(key, isrepeat)
 
 	if love.keyboard.isDown(" ") then
 		world.attackPlayer()
+	end
+
+end
+
+function love.keyreleased(key)
+
+	if key == "up" then
+		world.jumpPlayer()
 	end
 
 end

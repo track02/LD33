@@ -106,11 +106,7 @@ function npc.new(_npctype, level, curve_position)
 
 	
 	--Different behaviours civilian / warrior / ranger / cleric
-	local function civilianFlee(player_curve_position)
-
-
-		--Determine player position
-		px,py = level_curve:evaluate(player_curve_position)
+	local function civilianFlee(px, py)
 
 
 		--Determine distance from NPC
@@ -134,11 +130,7 @@ function npc.new(_npctype, level, curve_position)
 	end
 
 
-	local function warriorAttack(player_curve_position)
-
-		-- PULL THIS OUT INTO UTILITY
-		--Determine player position
-		px,py = level_curve:evaluate(player_curve_position)
+	local function warriorAttack(px, py)
 
 		--Determine distance from NPC
 		dx = math.abs(px - x)
@@ -160,12 +152,8 @@ function npc.new(_npctype, level, curve_position)
 
 	end	
 	
-	local function rangerAttack(player_curve_position)
+	local function rangerAttack(px, py)
 	
-		-- PULL THIS OUT INTO UTILITY
-		--Determine player position
-		px,py = level_curve:evaluate(player_curve_position)
-
 		--Determine distance from NPC
 		dx = math.abs(px - x)
 		dy = math.abs(py - y)
@@ -192,12 +180,8 @@ function npc.new(_npctype, level, curve_position)
 	end
 
 
-	local function mageAttack(player_curve_position)
+	local function mageAttack(px, py)
 			
-		-- PULL THIS OUT INTO UTILITY
-		--Determine player position
-		px,py = level_curve:evaluate(player_curve_position)
-
 		--Determine distance from NPC
 		dx = math.abs(px - x)
 		dy = math.abs(py - y)
@@ -223,17 +207,16 @@ function npc.new(_npctype, level, curve_position)
 
 	end
 
-	function self.update(player_curve_position) 
-
+	function self.update(px, py) 
 
 		if(npctype == 0) then
-			civilianFlee(player_curve_position)
+			civilianFlee(px,py)
 		elseif(npctype == 1) then
-			warriorAttack(player_curve_position)
+			warriorAttack(px,py)
 		elseif(npctype == 2) then
-			rangerAttack(player_curve_position)
+			rangerAttack(px, py)
 		elseif(npctype == 3) then
-			mageAttack(player_curve_position)
+			mageAttack(px, py)
 		elseif(npctype == 5) then
 			self.move(fly_speed)
 		end	
