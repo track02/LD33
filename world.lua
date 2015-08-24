@@ -75,7 +75,7 @@ function world.new()
 			love.graphics.translate(buildings[i].x, buildings[i].y)
 			love.graphics.rotate(buildings[i].rotation)
 			love.graphics.translate(-buildings[i].x, -buildings[i].y)
-
+			
 			love.graphics.rectangle("fill",
 						buildings[i].x,
 						buildings[i].y,
@@ -84,6 +84,9 @@ function world.new()
 
 			--Restore original coordinate system
 			love.graphics.pop()
+
+			cx,cy = player.getCenter()
+			love.graphics.print("Player CX: ".. cx .. " Player CY: " .. cy, 400,100)
 
 		end
 
@@ -95,10 +98,14 @@ function world.new()
 
 
 	function self.update(dt)
+		px, py = player.getPosition()
+		cx,cy = player.getCenter()
+
 		npcs.createNPCs()
-		npcs.updateNPCs(player.getPosition())
+		npcs.updateNPCs(px, py, cx, cy)
 		player.update(dt)
 		npcs.checkHits(player.getAttacks())
+		npcs.checkProjHits(cx, cy, player.getRadius())
 	end
 
 	

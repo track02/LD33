@@ -18,8 +18,8 @@ function npc.new(_npctype, level, curve_position)
 	local fly_speed = 0.01
 	local npctype = _npctype -- 0 Civ / 1 War / 2 Rng / 3 Clr (Try and move to inheritance structure if time allows!)
 	local projectiles = {}
-	
-
+	local hit_player = false	
+	local playhx, playhy, playrad = 0,0,0
 
 	function self.move(increment)	
 
@@ -49,6 +49,10 @@ function npc.new(_npctype, level, curve_position)
 
 
 	function self.draw()
+	
+		if(hit_player) then
+			love.graphics.print("HIT PLAYER!", 500,300)
+		end
 
 		if(npctype == 1) then
 			love.graphics.setColor(255,0,0)
@@ -59,8 +63,12 @@ function npc.new(_npctype, level, curve_position)
 			love.graphics.setColor(0,255,0)
 			love.graphics.print("RANGER", 400,400)
 			if(#projectiles ~= 0) then
-				love.graphics.line(projectiles[1].curve:render())
+				projx, projy = projectiles[1].curve:evaluate(projectiles[1].position)
+				love.graphics.circle("fill", projx, projy, 3, 10)
 			end
+			
+			love.graphics.circle("line", playhx, playhy, playrad, 10)
+			
 		end
 
 
@@ -68,12 +76,14 @@ function npc.new(_npctype, level, curve_position)
 			love.graphics.setColor(0,0,255)
 			love.graphics.print("WIZARD", 400,300)
 			if(#projectiles ~= 0) then
-				love.graphics.line(projectiles[1].curve:render())
+				projx, projy = projectiles[1].curve:evaluate(projectiles[1].position)
+				love.graphics.circle("fill", projx, projy, 3, 10)
+			end		
+
 		end
 
 
 
-		end
 
 		love.graphics.push()
 
@@ -152,7 +162,7 @@ function npc.new(_npctype, level, curve_position)
 
 	end	
 	
-	local function rangerAttack(px, py)
+	local function rangerAttack(px, py, cx, cy)
 	
 		--Determine distance from NPC
 		dx = math.abs(px - x)
@@ -167,10 +177,12 @@ function npc.new(_npctype, level, curve_position)
 			else
 				self.move(-move_speed)
 			end
-		elseif(distance > flee_distance and distance <= fire_distance) then
+		elseif(distance > flee_distance and distance <= fire_distance and #projectiles < 1) then
 			--Create a new projectile if isn't present
 			projectile = {}
-			projectile.curve = love.math.newBezierCurve(x,y,dx/2, dy/2, px,py)
+			projectile.curve = love.math.newBezierCurve(x,y,dx/2,y - 50, cx,cy)
+			projectile.position = level_position
+			projectile.travel_speed = 0.005
 			table.insert(projectiles,projectile)
 		else
 			randomMovement()
@@ -180,7 +192,7 @@ function npc.new(_npctype, level, curve_position)
 	end
 
 
-	local function mageAttack(px, py)
+	local function mageAttack(px, py, cx, cy)
 			
 		--Determine distance from NPC
 		dx = math.abs(px - x)
@@ -195,10 +207,12 @@ function npc.new(_npctype, level, curve_position)
 			else
 				self.move(-move_speed)
 			end
-		elseif(distance > flee_distance and distance <= magic_distance) then
+		elseif(distance > flee_distance and distance <= magic_distance and #projectiles < 1) then
 			--Create a new projectile if isn't present
 			projectile = {}
-			projectile.curve = love.math.newBezierCurve(x,y,px,py)
+			projectile.curve = love.math.newBezierCurve(x,y,cx,cy)
+			projectile.position = level_position
+			projectile.travel_speed = 0.004
 			table.insert(projectiles,projectile)
 		else
 			randomMovement()
@@ -207,19 +221,36 @@ function npc.new(_npctype, level, curve_position)
 
 	end
 
-	function self.update(px, py) 
+	function self.update(px, py, cx, cy) 
 
 		if(npctype == 0) then
 			civilianFlee(px,py)
 		elseif(npctype == 1) then
 			warriorAttack(px,py)
 		elseif(npctype == 2) then
-			rangerAttack(px, py)
+			rangerAttack(px, py, cx, cy)
 		elseif(npctype == 3) then
-			mageAttack(px, py)
+			mageAttack(px, py, cx, cy)
 		elseif(npctype == 5) then
 			self.move(fly_speed)
 		end	
+
+
+		--Update projectiles
+		toremove = {}
+
+		--Move attack
+		for i=1, #projectiles, 1 do
+			projectiles[i].position = projectiles[i].position + projectiles[i].travel_speed
+			
+			if(projectiles[i].position >= 1) then
+				table.insert(toremove,i)
+			end
+		end
+
+		for i=1, #toremove, 1 do
+			table.remove(projectiles, i)
+		end
 
 
 	end
@@ -242,7 +273,41 @@ function npc.new(_npctype, level, curve_position)
 		level_position = 0
 	end
 		
+	function self.projectileHitCheck(plx,ply,radius)
 
+		playhx, playhy, playrad = plx, ply, radius
+		hits = 0
+		toremove = {}
+		
+		for i=1, #projectiles, 1 do
+
+			--Get projectile coords		
+			pjx,pjy = projectiles[i].curve:evaluate(projectiles[i].position)
+
+
+			--Check if fall within player hitbox - circular
+			--Distance between points
+			dx = math.abs(pjx - plx)
+			dy = math.abs(pjy - ply)
+			distance = math.sqrt((dx*dx) + (dy*dy))
+			
+			
+
+			if(distance <= 5) then
+				hits = hits + 1
+				table.insert(toremove, i)
+				hit_player = true
+			end
+		end
+
+		for i=1, #toremove, 1 do		
+			table.remove(projectiles, i)
+		end
+		
+
+		return hits
+
+	end
 
 
 	return self

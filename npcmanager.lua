@@ -36,11 +36,11 @@ function npcmanager.new(level)
 	end
 
 	--Update NPCs based on player position
-	function self.updateNPCs(px ,py)
+	function self.updateNPCs(px ,py, cx, cy)
 
 		for i=1,#npcs,1 do
 			--Determine what to do, flee, attack, heal friends
-			npcs[i].update(px,py) 
+			npcs[i].update(px,py, cx, cy) 
 		end
 	end
 
@@ -77,6 +77,23 @@ function npcmanager.new(level)
 
 
 	end
+
+	--Check if NPC projectile has hit player
+	function self.checkProjHits(player_x, player_y, player_radius)
+	
+		hits = 0
+
+		for i=1, #npcs, 1 do
+	
+			hits = hits + npcs[i].projectileHitCheck(player_x, player_y, player_radius)
+		
+		end
+		
+		return hits	
+		
+	end
+	
+
 	
 	function self.drawNPCs()
 		

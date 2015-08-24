@@ -7,6 +7,7 @@ function player.new(level)
 	local rotation = 0
 	local width = 10
 	local height = 10
+	local radius = 5
 	local level_curve = level
 	local level_curve_original = level
 	local level_position = 0
@@ -26,22 +27,39 @@ function player.new(level)
 	local jump_arcspeed = 0.0005
 	local jump_speed = 0.75
 	local jumping = false
+	local landed = false
+	local jump_dir = 0
+	local jump_cancel = false	
 
 	--Attacks travel along the level, from player level_position to an end point
 	local attacks = {}
 
 	function self.move(direction)
-		move_dir = direction		
+		if(not jumping and not display_arc) then
+			move_dir = direction
+		end
+
+		if(jumping) then
+			jump_dir = direction
+		end
+
+		if(display_arc) then
+			jump_cancel = true
+			display_arc = false
+			move_dir = direction
+			
+		end
+
 	end
 
 	function self.showJump()
 	
 
-		if(not jumping) then	
+		if(not jumping and not jump_cancel) then	
 			display_arc = true
-				
+							
 			--move jump landing zone while key is held down	
-			jump_end = jump_end + jump_arcspeed
+			jump_end = jump_end + (jump_arcspeed * move_dir)
 		
 			if(jump_end > 1) then
 				jump_end = 1
@@ -65,13 +83,22 @@ function player.new(level)
 	end
 
 	function self.jump()
-	
-		display_arc = false
-		jumping = true				
-		level_curve = jump_arc
-		level_position = 0
-		move_dir = 0
 
+		if(not jumping and not jump_cancel) then
+	
+			display_arc = false
+			jumping = true				
+			level_curve = jump_arc
+			level_position = 0
+			jump_dir = move_dir --Hold movement direction
+			move_dir = 0 --Set movement direction to 0, otherwise will rotate along jump curve
+		end
+		if(jump_cancel) then
+			display_arc = false
+			jump_cancel = false
+		end
+
+		
 	end	
 
 
@@ -81,7 +108,7 @@ function player.new(level)
 		--Add new attack -> adjust for facing left!
 		attack = {}
 		attack.start_position = level_position
-		attack.end_position = level_position + (attack_distance  ) 
+		attack.end_position = level_position + (attack_distance * move_dir) 
 		attack.position = level_position	
 
 		table.insert(attacks, attack)		
@@ -124,7 +151,7 @@ function player.new(level)
 				level_position = jump_end
 				level_curve = level_curve_original
 				jumping = false
-				move_dir = 1
+				landed = true
 			end
 
 		elseif(not jumping) then
@@ -162,16 +189,17 @@ function player.new(level)
 		cx = x + ((width/2)*move_dir)
 		cy = y - (height/2)
 
-		if(not display_arc and not jumping) then
-			jump_end = level_position
-		end
-
-
-
-
 		attack_update()
 
 
+		if(not jumping and not display_arc) then
+			jump_end = level_position
+		end
+
+		if(landed) then
+			move_dir = jump_dir --Reset move_dir on landing
+			landed = false
+		end
 	end
 
 	
@@ -193,7 +221,7 @@ function player.new(level)
 					height)
 		
 		love.graphics.setColor(204,0,204)
-		love.graphics.circle("fill", x,y,3,10)
+		love.graphics.circle("fill", (x+width/2),(y+height/2),3,10)
 		love.graphics.setColor(255,255,255)
 			
 		love.graphics.pop()
@@ -201,6 +229,9 @@ function player.new(level)
 		love.graphics.print("Y Position: " .. y, x, 100)
 		love.graphics.print("X Position: " .. x, x, 110)
 		love.graphics.print("ATTACK NO: " .. #attacks, x,150)
+		love.graphics.print("JUMP END: " .. jump_end, x, 175)
+		love.graphics.print("MOVE DIR: ".. move_dir ,x, 190)
+--		love.graphics.circle("line", (x-width/2), (y-height/2), radius, 10)
 		love.graphics.setColor(204,0,204)
 
 		--Draw attacks
@@ -230,6 +261,15 @@ function player.new(level)
 	
 	function self.getPosition()
 		return x,y
+	end
+
+	function self.getCenter()
+		return (x-width/2),(y-height/2)		
+
+	end
+	
+	function self.getRadius()
+		return radius
 	end
 
 	self.move(0)
