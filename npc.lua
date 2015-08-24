@@ -15,6 +15,7 @@ function npc.new(_npctype, level, curve_position)
 	local fire_distance = 400
 	local magic_distance = 250
 	local move_speed = 0.0001
+	local fly_speed = 0.01
 	local npctype = _npctype -- 0 Civ / 1 War / 2 Rng / 3 Clr (Try and move to inheritance structure if time allows!)
 	local projectiles = {}
 	
@@ -233,17 +234,37 @@ function npc.new(_npctype, level, curve_position)
 			rangerAttack(player_curve_position)
 		elseif(npctype == 3) then
 			mageAttack(player_curve_position)
+		elseif(npctype == 5) then
+			self.move(fly_speed)
 		end	
 
 
 	end
 
 
+	function self.getLevelPosition()
+		return level_position
+	end
 
-	
+	function self.getType()
+		return npctype
+	end
+
+	function self.hit()
+		--Change type, destroyed
+		npctype = 5
+		
+		--Generate random curve, flying off level
+		level_curve = love.math.newBezierCurve(x,y, x,  y, x+ math.random(50,100), y - 50)
+		level_position = 0
+	end
+		
+
+
 
 	return self
 
 end	
 
 return npc 
+

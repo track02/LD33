@@ -38,6 +38,11 @@ function love.keypressed(key, isrepeat)
 	if love.keyboard.isDown("down") then
 		world.movePlayer(0)
 	end
+
+	if love.keyboard.isDown(" ") then
+		world.attackPlayer()
+	end
+
 end
 
 function love.mousemoved(x,y,dx,dy)

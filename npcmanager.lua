@@ -46,12 +46,35 @@ function npcmanager.new(level)
 
 
 	--Check if an NPC has been hit by player
-	function self.checkHits(centerx,centery, radius) 
+	function self.checkHits(attacks) 
 
-		for i=1, #npcs, 1 do
-			--Determine if hit, react accordingly
-			--npcs[i].hitcheck(centerx, centery, radius)
+		--Look at player attacks, see if any npc has been hit
+		for a = 1, #attacks, 1 do
+
+			--Attack start/end position
+			atk_start = attacks[a].start_position
+			atk_end = attacks[a].end_position
+
+
+			for i=1, #npcs, 1 do
+
+				npctype = npcs[i].getType()
+				npcPosition = npcs[i].getLevelPosition()
+				
+				if(npctype ~= 5 
+				and (npcPosition >= atk_start and npcPosition <= atk_end) 
+				or (npcPosition <= atk_start and npcPosition >= atk_end)) then
+					npcs[i].hit()
+				end
+
+				--Determine if hit, react accordingly
+				--npcs[i].hitcheck(centerx, centery, radius)
+
+
+			end
+
 		end
+
 
 	end
 	
