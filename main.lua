@@ -4,7 +4,9 @@ function love.conf(t)
 end
 
 function love.load()
+	
 
+	love.window.setTitle("LD33 - Shrimpkin Stomp")
 	love.keyboard.setKeyRepeat(true)
 	
 	world = _world.new()

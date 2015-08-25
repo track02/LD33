@@ -114,11 +114,11 @@ function npcmanager.new(level)
 	
 	function self.drawNPCs()
 	
-		love.graphics.print("NPCS LEFT: " .. #npcs, 600,40)
+	--	love.graphics.print("NPCS LEFT: " .. #npcs, 600,40)
 
-		if(deadnpc) then
-			love.graphics.print("NPC REMOVED!", 600, 50)
-		end	
+	--	if(deadnpc) then
+	--		love.graphics.print("NPC REMOVED!", 600, 50)
+	--	end	
 	
 		for i=1, #npcs, 1 do
 			npcs[i].draw()
